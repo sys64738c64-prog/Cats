@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Credentials and generated runtime files
+serviceAccountKey*.json
+*.log
+zuordnung_ergebnisse.csv
+*.lnk
+
+# Local scan and player-image data
+KM/scan/
+KM/Namen_Master*/
+Spy/

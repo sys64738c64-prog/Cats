@@ -1,0 +1,1 @@
+powershell.exe -NoExit -Command "python -u '.\Cats_Fz_Status_v5.0.py' 2>&1 | Tee-Object -FilePath '.\console.txt'"

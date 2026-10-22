@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C.A.T.S Online Schedule</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 10px;
+            background-color: #f5f5f5;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .container {
+            max-width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 2px 3px;
+            text-align: center;
+            height: 18px;
+            line-height: 14px;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+            font-size: 12px;
+        }
+
+        .player-name {
+            background-color: #fda4a4;
+            font-weight: bold;
+            text-align: left;
+            padding: 4px;
+            width: 1%;
+            white-space: nowrap;
+            font-size: 9px;
+        }
+
+        .hour-cell {
+            cursor: pointer;
+            background-color: #f0f0f0;
+            transition: background-color 0.2s;
+            width: 25px;
+            padding: 2px 3px;
+            font-size: 10px;
+        }
+
+        .hour-cell:hover {
+            background-color: #e0e0e0;
+        }
+
+        .hour-cell.available {
+            background-color: #66BB6A;
+            color: white;
+        }
+
+        .hour-cell.unavailable {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .summary-row {
+            background-color: #e3f2fd;
+            font-weight: bold;
+        }
+
+        .sync-status {
+            text-align: center;
+            padding: 5px;
+            margin: 10px 0;
+            border-radius: 3px;
+            font-size: 12px;
+        }
+
+        .online {
+            background-color: #e6f7e6;
+            color: #2e7d32;
+        }
+
+        .offline {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
+        @media screen and (max-width: 768px) {
+            .hour-cell {
+                width: 25px;
+                height: 25px;
+                font-size: 10px;
+                padding: 4px;
+            }
+
+            th {
+                font-size: 10px;
+                padding: 4px;
+            }
+
+            .player-name {
+                font-size: 11px;
+                min-width: 80px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <h1>C.A.T.S Online Schedule KILLÉMALL</h1>
+
+    <div class="sync-status offline" id="sync-status">Connecting...</div>
+
+    <div style="text-align: center; margin: 10px 0;">
+        <label for="timezone-select" style="font-weight: bold; margin-right: 10px;">Your Timezone:</label>
+        <select id="timezone-select" style="padding: 5px; font-size: 14px;">
+            <option value="-12">UTC-12 (Baker Island)</option>
+            <option value="-11">UTC-11 (American Samoa)</option>
+            <option value="-10">UTC-10 (Hawaii)</option>
+            <option value="-9">UTC-9 (Alaska)</option>
+            <option value="-8">UTC-8 (Los Angeles, Vancouver)</option>
+            <option value="-7">UTC-7 (Denver, Phoenix)</option>
+            <option value="-6">UTC-6 (Chicago, Mexico City)</option>
+            <option value="-5">UTC-5 (New York, Toronto)</option>
+            <option value="-4">UTC-4 (Santiago, Caracas)</option>
+            <option value="-3">UTC-3 (Buenos Aires, São Paulo)</option>
+            <option value="-2">UTC-2 (South Georgia)</option>
+            <option value="-1">UTC-1 (Azores)</option>
+            <option value="0">UTC+0 (London, Lisbon)</option>
+            <option value="1" selected>UTC+1 (Berlin, Paris, Rome)</option>
+            <option value="2">UTC+2 (Helsinki, Athens, Cairo)</option>
+            <option value="3">UTC+3 (Moscow, Istanbul, Riyadh)</option>
+            <option value="4">UTC+4 (Dubai, Baku)</option>
+            <option value="5">UTC+5 (Karachi, Tashkent)</option>
+            <option value="5.5">UTC+5:30 (Mumbai, Delhi)</option>
+            <option value="6">UTC+6 (Dhaka, Almaty)</option>
+            <option value="7">UTC+7 (Bangkok, Jakarta)</option>
+            <option value="8">UTC+8 (Beijing, Singapore, Perth)</option>
+            <option value="9">UTC+9 (Tokyo, Seoul)</option>
+            <option value="9.5">UTC+9:30 (Adelaide)</option>
+            <option value="10">UTC+10 (Sydney, Melbourne)</option>
+            <option value="11">UTC+11 (Solomon Islands)</option>
+            <option value="12">UTC+12 (Auckland, Fiji)</option>
+            <option value="13">UTC+13 (Tonga)</option>
+            <option value="14">UTC+14 (Kiribati)</option>
+        </select>
+    </div>
+
+    <div class="container">
+        <table id="schedule-table">
+            <thead>
+                <tr id="hour-header">
+                    <th class="player-name">Spieler</th>
+                </tr>
+            </thead>
+            <tbody id="schedule-body"></tbody>
+            <tfoot>
+                <tr class="summary-row" id="summary-row">
+                    <td class="player-name">Available</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            databaseURL: "https://killemall-15063-default-rtdb.europe-west1.firebasedatabase.app"
+        };
+
+        const players = [
+            "AIRBORJES4",
+            "BEEVEN",
+            "BUILDMASTERDREADZ",
+            "CAP",
+            "DARDAR",
+            // "DARKHELL",
+            // "DOKIAHATALMAS",
+            "JAYSEN",
+            "EVILJAYSEN",
+            // "ERICK",
+            // "FLOOFS",
+            "JC85",
+            "KOIVU",
+            "MUSCHI",
+            "NOT HEY",
+            "ONKELRENE666",
+            "PATRICKSPATZ",
+            // "ЧОРНЫ КАШАК",
+            // "PEDRO",
+            "ROBINHOOD",
+            "SAINT",
+            "SLOMO",
+            "SNOW",
+            "TACN",
+            "TIGY",
+            "SIGY",
+            //"STEFAN",
+            "WARRIORESD",
+            "ののの",
+            "りぷとん",
+            "テッペイ",
+            "ぴよきち",
+        ];
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let currentTimezone = 1; // Default: UTC+1 (Berlin)
+
+        function getUTCHour(localHour, timezone) {
+            let utc = localHour - timezone;
+            while (utc < 0) utc += 24;
+            while (utc >= 24) utc -= 24;
+            return Math.floor(utc);
+        }
+
+        function getLocalHour(utcHour, timezone) {
+            let local = utcHour + timezone;
+            while (local < 0) local += 24;
+            while (local >= 24) local -= 24;
+            return Math.floor(local);
+        }
+
+        function updateHeaders() {
+            const headerRow = document.getElementById('hour-header');
+            const summaryRow = document.getElementById('summary-row');
+            
+            // Clear existing headers (except first cell)
+            while (headerRow.children.length > 1) {
+                headerRow.removeChild(headerRow.lastChild);
+            }
+            while (summaryRow.children.length > 1) {
+                summaryRow.removeChild(summaryRow.lastChild);
+            }
+            
+            // Add 24 hour headers
+            for (let i = 0; i < 24; i++) {
+                const th = document.createElement('th');
+                th.textContent = i;
+                headerRow.appendChild(th);
+                
+                const td = document.createElement('td');
+                td.id = `count-${i}`;
+                td.textContent = '0';
+                summaryRow.appendChild(td);
+            }
+        }
+
+        function createTable() {
+            const tbody = document.getElementById('schedule-body');
+            tbody.innerHTML = '';
+            
+            players.forEach(player => {
+                const row = document.createElement('tr');
+                
+                const nameCell = document.createElement('td');
+                nameCell.className = 'player-name';
+                nameCell.textContent = player;
+                row.appendChild(nameCell);
+                
+                for (let localHour = 0; localHour < 24; localHour++) {
+                    const cell = document.createElement('td');
+                    cell.className = 'hour-cell';
+                    cell.dataset.player = player;
+                    cell.dataset.localHour = localHour;
+                    
+                    let longPressTimer = null;
+                    let isLongPress = false;
+
+                    const handleGreen = (cell) => {
+                        cell.classList.remove('unavailable');
+                        cell.classList.toggle('available');
+                        const status = cell.classList.contains('available') ? 'available' : 'none';
+                        saveToFirebase(player, getUTCHour(localHour, currentTimezone), status);
+                        updateSummary();
+                    };
+
+                    const handleRed = (cell) => {
+                        cell.classList.remove('available');
+                        cell.classList.toggle('unavailable');
+                        const status = cell.classList.contains('unavailable') ? 'unavailable' : 'none';
+                        saveToFirebase(player, getUTCHour(localHour, currentTimezone), status);
+                        updateSummary();
+                    };
+
+                    cell.addEventListener('click', function() {
+                        if (!isLongPress) handleGreen(this);
+                    });
+
+                    cell.addEventListener('contextmenu', function(e) {
+                        e.preventDefault();
+                        handleRed(this);
+                    });
+
+                    cell.addEventListener('touchstart', function() {
+                        isLongPress = false;
+                        longPressTimer = setTimeout(() => {
+                            isLongPress = true;
+                            handleRed(this);
+                        }, 500);
+                    }, { passive: true });
+
+                    cell.addEventListener('touchend', function() {
+                        clearTimeout(longPressTimer);
+                    });
+
+                    cell.addEventListener('touchmove', function() {
+                        clearTimeout(longPressTimer);
+                        isLongPress = true;
+                    }, { passive: true });
+                    
+                    row.appendChild(cell);
+                }
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        function saveToFirebase(player, utcHour, status) {
+            const updates = {};
+            updates[`OnlineZeiten/${player}/${utcHour}`] = status;
+            database.ref().update(updates);
+        }
+
+        function loadFromFirebase() {
+            database.ref('OnlineZeiten').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    players.forEach(player => {
+                        if (data[player]) {
+                            for (let localHour = 0; localHour < 24; localHour++) {
+                                const utcHour = getUTCHour(localHour, currentTimezone);
+                                const cell = document.querySelector(`[data-player="${player}"][data-local-hour="${localHour}"]`);
+                                if (cell) {
+                                    cell.classList.remove('available', 'unavailable');
+                                    if (data[player][utcHour] === 'available') {
+                                        cell.classList.add('available');
+                                    } else if (data[player][utcHour] === 'unavailable') {
+                                        cell.classList.add('unavailable');
+                                    }
+                                }
+                            }
+                        }
+                    });
+                    updateSummary();
+                }
+            });
+        }
+
+        function updateSummary() {
+            for (let localHour = 0; localHour < 24; localHour++) {
+                const cells = document.querySelectorAll(`[data-local-hour="${localHour}"].available`);
+                const countCell = document.getElementById(`count-${localHour}`);
+                if (countCell) {
+                    countCell.textContent = cells.length;
+                }
+            }
+        }
+
+        function changeTimezone() {
+            currentTimezone = parseFloat(document.getElementById('timezone-select').value);
+            localStorage.setItem('timezone', currentTimezone);
+            createTable();
+            loadFromFirebase();
+        }
+
+        function setupConnection() {
+            const statusElement = document.getElementById('sync-status');
+            
+            database.ref('.info/connected').on('value', (snapshot) => {
+                if (snapshot.val() === true) {
+                    statusElement.textContent = "Connected - Sync active";
+                    statusElement.className = "sync-status online";
+                } else {
+                    statusElement.textContent = "Offline - Local changes only";
+                    statusElement.className = "sync-status offline";
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load saved timezone
+            const savedTimezone = localStorage.getItem('timezone');
+            if (savedTimezone) {
+                currentTimezone = parseFloat(savedTimezone);
+                document.getElementById('timezone-select').value = currentTimezone;
+            }
+            
+            // Timezone change listener
+            document.getElementById('timezone-select').addEventListener('change', changeTimezone);
+            
+            updateHeaders();
+            createTable();
+            setupConnection();
+            loadFromFirebase();
+        });
+    </script>
+</body>
+
+</html>

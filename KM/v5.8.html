@@ -1,0 +1,1957 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    connect-src 'self' data: blob: https: wss:;
+    script-src 'self' 'unsafe-inline' https:;
+    style-src 'self' 'unsafe-inline';
+    img-src 'self' data: https:;
+">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C.A.T.S Fahrzeugpark</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+
+    <style>
+        /* ===== BASIS STYLES ===== */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 5px;
+            background-color: #f5f5f5;
+            font-size: 12px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            font-size: 14px;
+            margin: 5px 0;
+        }
+
+        /* ===== TABELLEN STYLES ===== */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0 0 2px rgba(0, 0, 0, 0.1);
+            table-layout: fixed;
+            margin-bottom: 10px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 2px 3px;
+            text-align: left;
+            height: 18px;
+            line-height: 14px;
+            overflow: hidden;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+            padding: 3px;
+            font-size: 11px;
+        }
+
+        /* ===== ZELLEN STYLES ===== */
+        .player-name {
+            font-weight: bold;
+            width: 60px;
+            min-width: 60px;
+            max-width: 60px;
+            font-size: 11px;
+            color: black !important;
+            background-color: #fda4a4 !important;
+        }
+
+        .vehicle-cell {
+            width: 60px;
+            min-width: 60px;
+            max-width: 60px;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        .reps-cell {
+            width: 25px;
+            min-width: 25px;
+            max-width: 25px;
+            text-align: center;
+            padding: 1px !important;
+        }
+
+        .reps-select {
+            font-size: 10px;
+            padding: 0;
+            text-align: center;
+            box-sizing: border-box;
+            width: 100%;
+        }
+
+        /* ===== SELECT STYLES ===== */
+        select {
+            width: 60%;
+            padding: 0;
+            border: none;
+            border-radius: 2px;
+            height: 18px;
+            font-size: 11px;
+            box-sizing: border-box;
+            margin: 0;
+            background-color: transparent;
+            display: inline-block;
+        }
+
+        /* ===== ZEIT STYLES ===== */
+        .time-stamp {
+            font-size: 9px;
+            color: #000000;
+            display: inline;
+            white-space: nowrap;
+            margin-left: 2px;
+        }
+
+        .duration {
+            color: #000000;
+        }
+
+        /* ===== INFO BEREICHE ===== */
+        .free-vehicles {
+            background-color: white;
+            padding: 8px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .gb-timestamps,
+        .gb-colors {
+            background-color: white;
+            padding: 5px;
+            border: 1px solid #ddd;
+            font-size: 11px;
+            margin-bottom: 10px;
+        }
+
+        .gb-color-item {
+            background-color: #f0f0f0;
+            padding: 3px;
+            border-radius: 3px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .color-indicator {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            border: 1px solid #333;
+        }
+
+        .color-blau {
+            background-color: #4179D9;
+        }
+
+        .color-rot {
+            background-color: #FF0000;
+        }
+
+        .color-grau {
+            background-color: #808080;
+        }
+
+        .gb-timestamps h3 {
+            margin: 0 0 5px 0;
+            text-align: center;
+        }
+
+        .gb-timestamp-grid,
+        .gb-colors-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+        }
+
+        .gb-timestamp-item {
+            background-color: #f0f0f0;
+            padding: 3px;
+            border-radius: 3px;
+            text-align: center;
+        }
+
+        .gb-timestamp-item .gb-name {
+            font-weight: bold;
+        }
+
+        .gb-timestamp-item .gb-time {
+            font-size: 10px;
+            color: inherit;
+        }
+
+        /* ===== STATUS ÜBERSICHT ===== */
+        .status-overview {
+            background-color: white;
+            padding: 5px;
+            border: 1px solid #ddd;
+            font-size: 11px;
+            margin-bottom: 10px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 5px;
+        }
+
+        .status-section {
+            margin-bottom: 5px;
+        }
+
+        .status-header {
+            font-weight: bold;
+            margin-bottom: 3px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            display: inline-block;
+        }
+
+        .player-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 3px;
+        }
+
+        .player-item {
+            background-color: #f0f0f0;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 11px;
+            word-break: break-word;
+        }
+
+        .player-time {
+            color: #666;
+            font-size: 9px;
+        }
+
+        /* ===== STEUERUNG ===== */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            font-size: 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            white-space: nowrap;
+        }
+
+        /* ===== SYNC STATUS ===== */
+        .sync-status {
+            font-size: 11px;
+            text-align: center;
+            margin: 5px 0;
+            padding: 3px;
+            border-radius: 3px;
+        }
+
+        .online {
+            background-color: #e6f7e6;
+            color: #2e7d32;
+        }
+
+        .offline {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
+        .log-entry {
+            padding: 2px 0;
+            border-bottom: 1px solid #eee;
+            font-size: 11px;
+        }
+
+        /* ===== OPTION FARBEN ===== */
+        option[value=""] {
+            background-color: #f76c6c;
+        }
+
+        option[value="bereit"] {
+            background-color: #ff3ffc;
+        }
+
+        option[value="gekillt"],
+        option[value^="gekillt-"] {
+            background-color: #fd4444;
+            color: white;
+        }
+
+        option[value="GB1"] {
+            background-color: #e6f7e6;
+        }
+
+        option[value="GB2"] {
+            background-color: #d4edda;
+        }
+
+        option[value="GB3"] {
+            background-color: #c3e6cb;
+        }
+
+        option[value="GB4"] {
+            background-color: #b1dfbb;
+        }
+
+        option[value="GB5"] {
+            background-color: #a0d8b3;
+        }
+
+        option[value="GB6"] {
+            background-color: #8fd1a8;
+        }
+
+        option[value="Rep"] {
+            background-color: #c86fff;
+        }
+
+        option[value="Res"] {
+            background-color: #fcd555;
+        }
+
+        /* ===== AUSWAHL FARBEN ===== */
+        .no-selection {
+            background-color: #fd4444 !important;
+        }
+
+        .bereit-selection {
+            background-color: #ff3ffc !important;
+        }
+
+        .gekillt-selection {
+            background-color: #fd4444 !important;
+            color: white;
+        }
+
+        .gb1-selection {
+            background-color: #e6f7e6 !important;
+        }
+
+        .gb2-selection {
+            background-color: #d4edda !important;
+        }
+
+        .gb3-selection {
+            background-color: #c3e6cb !important;
+        }
+
+        .gb4-selection {
+            background-color: #b1dfbb !important;
+        }
+
+        .gb5-selection {
+            background-color: #a0d8b3 !important;
+        }
+
+        .gb6-selection {
+            background-color: #8fd1a8 !important;
+        }
+
+        .rep-selection {
+            background-color: #c86fff !important;
+        }
+
+        .res-selection {
+            background-color: #fcd555 !important;
+        }
+
+        .has-rep {
+            background-color: #e0a9f4 !important;
+        }
+
+        .has-res {
+            background-color: #fcd555 !important;
+        }
+
+        .has-gb {
+            background-color: #d4f5ae !important;
+        }
+
+        .all-set {
+            background-color: #66BB6A !important;
+            color: white;
+        }
+
+        /* ===== REPS ZELLEN FARBEN ===== */
+        .reps-cell-empty {
+            background-color: #ff0000 !important;
+        }
+
+        .reps-cell-0 {
+            background-color: #ffcccc !important;
+        }
+
+        .reps-cell-1-2 {
+            background-color: #d4f5ae !important;
+        }
+
+        .reps-cell-3-19 {
+            background-color: #2ab222 !important;
+            color: white;
+        }
+
+        /* ===== REP ZEIT EINGABE ===== */
+        .rep-time-input {
+            display: none;
+            position: absolute;
+            top: 18px;
+            left: 0;
+            background: white;
+            padding: 2px;
+            border: 1px solid #ddd;
+            z-index: 10;
+            font-size: 10px;
+        }
+
+        .rep-time-input input {
+            width: 50px;
+        }
+
+        /* ===== MOBILE OPTIMIERUNG ===== */
+        @media screen and (max-width: 480px) {
+            .reps-cell {
+                width: 35px !important;
+                min-width: 35px !important;
+                max-width: 35px !important;
+                font-size: 10px !important;
+            }
+
+            .player-name {
+                width: 50px !important;
+                min-width: 50px !important;
+                max-width: 50px !important;
+                font-size: 10px !important;
+            }
+
+            .vehicle-cell {
+                width: 55px !important;
+                min-width: 55px !important;
+                max-width: 55px !important;
+            }
+        }
+
+        @media screen and (max-height: 500px) and (orientation: landscape) {
+            * {
+                font-size: 10px !important;
+            }
+
+            body {
+                margin: 2px;
+            }
+
+            table {
+                margin-bottom: 5px;
+            }
+
+            th,
+            td {
+                padding: 1px 2px;
+                height: 14px;
+            }
+
+            .player-name,
+            .vehicle-cell {
+                width: 45px;
+                min-width: 45px;
+                max-width: 45px;
+            }
+
+            .reps-cell {
+                width: 25px;
+                min-width: 25px;
+                max-width: 25px;
+            }
+
+            select {
+                height: 14px;
+            }
+
+            .free-vehicles {
+                padding: 4px;
+                font-size: 12px !important;
+            }
+
+            .controls {
+                margin-bottom: 5px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <h1>C.A.T.S Fahrzeugpark KILLÉMALL</h1>
+
+    <div class="controls">
+        <button class="reset-all" id="reset-all">Alles zurücksetzen</button>
+        <button id="reconnect-btn">Verbindung neu starten</button>
+    </div>
+
+    <div class="sync-status offline" id="sync-status">Verbindung wird hergestellt...</div>
+
+    <table>
+        <thead>
+            <tr>
+                <th class="player-name">Spieler</th>
+                <th class="reps-cell">Reps</th>
+                <th class="vehicle-cell">Fz 1</th>
+                <th class="vehicle-cell">Fz 2</th>
+                <th class="vehicle-cell">Fz 3</th>
+            </tr>
+        </thead>
+        <tbody id="player-table"></tbody>
+    </table>
+
+    <div class="free-vehicles">
+        Freie Fahrzeuge: <span id="free-vehicles-count">75</span>/75
+    </div>
+
+    <div class="gb-timestamps">
+        <h3>Gebäude-aktualisiert:</h3>
+        <div id="gb-timestamps-container"></div>
+    </div>
+
+    <div class="status-overview" id="status-overview"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+    <script>
+        // ===== KONFIGURATION =====
+        const firebaseConfig = {
+            databaseURL: "https://killemall-15063-default-rtdb.europe-west1.firebasedatabase.app"
+        };
+
+
+        // Tracking für bereits gesendete Benachrichtigungen
+        const sentNotifications = new Map();
+
+        // Sammlung für GB-Benachrichtigungen
+        const gbNotificationQueue = new Map();
+        let gbNotificationTimer = null;
+
+        const players = [
+            "AIRBORJES4",
+            "BEEVEN",
+            "BUILDMASTERDREADZ",
+            "CAP",
+            "DARDAR",
+            // "DARKHELL",
+            "DOKIAHATALMAS",
+            "JAYSEN",
+            "EVILJAYSEN",
+            "ERICK",
+            // "FLOOFS",
+            "KOIVU",
+            "MUSCHI",
+            "NOT HEY",
+            "ONKELRENE666",
+            "PATRICKSPATZ",
+            // "ЧОРНЫ КАШАК",
+            "PEDRO",
+            "ROBINHOOD",
+            "SLOMO",
+            "SNOW",
+            "TACN",
+            "TIGY",
+            "SIGY",
+            "STEFAN",
+            "ぴよきち",
+            "りぷとん",
+            "싸퐁피퐁"
+                                    
+            // "BROWNIAN",  Lipton
+            // "CAPT OBVIOUS",
+            // "CATF1SH",
+            // "MUSHROOM",
+            // "RIO FREEMANTLE",
+            // "TACN",
+            // "毒舞茸 (Maitake mushroom)",
+            // "ウォッカ中山 (Vodka Nakayama)",
+            // "NOT HEY",
+            // "ЧОРНЫ КАШАК",
+            // "鮭とば (Saketoba)"
+            // "NICK",
+            // "EVILJAYSEN",
+            // "JAYSEN",
+            // "BUD SPENCER",
+            // "VIRTUE",
+            // "KÖTTR",
+            // "KLOPS",
+            // "ARMEIDA",
+            
+        ];
+
+        const options = [
+            { value: "", text: "-", class: "no-selection" },
+            { value: "bereit", text: "bereit", class: "bereit-selection" },
+            { value: "GB1", text: "GB1", class: "gb1-selection" },
+            { value: "GB2", text: "GB2", class: "gb2-selection" },
+            { value: "GB3", text: "GB3", class: "gb3-selection" },
+            { value: "GB4", text: "GB4", class: "gb4-selection" },
+            { value: "GB5", text: "GB5", class: "gb5-selection" },
+            { value: "GB6", text: "GB6", class: "gb6-selection" },
+            { value: "Rep", text: "Rep", class: "rep-selection" },
+            { value: "Res", text: "Res", class: "res-selection" },
+            { value: "gekillt", text: "gekillt", class: "gekillt-selection" },
+            { value: "gekillt-GB1", text: "GB1", class: "gekillt-selection" },
+            { value: "gekillt-GB2", text: "GB2", class: "gekillt-selection" },
+            { value: "gekillt-GB3", text: "GB3", class: "gekillt-selection" },
+            { value: "gekillt-GB4", text: "GB4", class: "gekillt-selection" },
+            { value: "gekillt-GB5", text: "GB5", class: "gekillt-selection" },
+            { value: "gekillt-GB6", text: "GB6", class: "gekillt-selection" }
+        ];
+
+        const MAX_VEHICLES = 75;
+        const DEFAULT_REP_MINUTES = 120;
+
+        const msg = 2; // 0 = keine Benachrichtigung, 1 = gesetzte FZ Discord, 2 = gesetzte FZ Discord + Name
+        const discordConfig = {
+            "AIRBORJES4": { id: "<@613572404001898506>", showName: 2, notification: msg },
+            "ALLEN": { id: "<@0>", showName: 2, notification: msg },
+            "ARMEIDA": { id: "<@1042791348476063825>", showName: 2, notification: msg },
+            "ASABIITOSBAA": { id: "<@0>", showName: 2, notification: msg },
+            "BEEVEN": { id: "<@586151145622208517>", showName: 2, notification: msg },
+            "BLACK": { id: "<@0>", showName: 2, notification: msg },
+            "BROWNIAN": { id: "<@385361572501127169>", showName: 2, notification: msg },
+            "BUD SPENCER": { id: "<@496359037395271711>", showName: 2, notification: msg },
+            "BUILDMASTERDREADZ": { id: "<@0>", showName: 2, notification: msg },
+            "CAP": { id: "<@1233758548870041642>", showName: 2, notification: msg },
+            "CAPT OBVIOUS": { id: "<@0>", showName: 2, notification: msg },
+            "CATF1SH": { id: "<@0>", showName: 2, notification: msg },
+            "DARDAR": { id: "<@812921408824147979>", showName: 2, notification: msg },
+            "DARKHELL": { id: "<@0>", showName: 2, notification: msg },
+            "Dokiahatalmas": { id: "<@1404075912969846916>", showName: 2, notification: msg },
+            "Dreadz": { id: "<@535293894435536907>", showName: 2, notification: msg },
+            "EVILJAYSEN": { id: "<@279368829962944512>", showName: 2, notification: msg },
+            "Erick": { id: "<@0>", showName: 2, notification: msg },
+            "FLOOFS": { id: "<@324151608802017281>", showName: 2, notification: msg },
+            "IOSI": { id: "<@0>", showName: 2, notification: msg },
+            "JAYSEN": { id: "<@279368829962944512>", showName: 2, notification: msg },
+            "JAZIL": { id: "<@354631993709035521>", showName: 2, notification: msg },
+            "JC85": { id: "<@0>", showName: 2, notification: msg },
+            "JOEBOOMBANG": { id: "<@558257951890997254>", showName: 2, notification: msg },
+            "KLOPS": { id: "<@1018863211459649628>", showName: 2, notification: msg },
+            "KOIVU": { id: "<@1042520491153444904>", showName: 2, notification: msg },
+            "KÖTTR": { id: "<@0>", showName: 2, notification: msg },
+            "MUSCHI": { id: "<@1326855322509508693>", showName: 2, notification: msg },
+            "NICK": { id: "<@1425114514281725987>", showName: 2, notification: msg },
+            "NOT HEY": { id: "<@290656732051406848>", showName: 2, notification: msg },
+            "ONKELRENE666": { id: "<@1334948870060376144>", showName: 2, notification: msg },
+            "PATRICKSPATZ": { id: "<@1233447672535449642>", showName: 2, notification: msg },
+            "PEDRO": { id: "<@628939846085509162>", showName: 2, notification: msg },
+            "ROBINHOOD": { id: "<@888353654862676019>", showName: 2, notification: msg },
+            "SIGY": { id: "<@865626130719572038>", showName: 2, notification: msg },
+            "SLOMO": { id: "<@510075250071961620>", showName: 2, notification: msg },
+            "SNOW": { id: "<@1206239060956418102>", showName: 2, notification: msg },
+            "STEFAN": { id: "<@865626130719572038>", showName: 2, notification: msg },
+            "TACN": { id: "<@434746763438718978>", showName: 2, notification: msg },
+            "TIGY": { id: "<@865626130719572038>", showName: 2, notification: msg },
+            "VIRTUE": { id: "<@815868276110262304>", showName: 2, notification: msg },
+            "りぷとん": { id: "<@1247758474348204072>", showName: 2, notification: msg },
+            "ぴよきち": { id: "<@0>", showName: 2, notification: msg },
+            "ウォッカ中山": { id: "<@0>", showName: 2, notification: msg },
+            "鮭とば": { id: "<@0>", showName: 2, notification: msg },
+            "싸퐁피퐁": { id: "<@0>", showName: 2, notification: msg },
+            "ЧОРНЫ КАШАК": { id: "<@1233447672535449642>", showName: 2, notification: msg }
+
+            // "RIO FREEMANTLE": { id: "<@0>", showName: 0, notification: msg },
+            // "TBCAT": { id: "<@1398608695465738241>", showName: 0, notification: msg }
+            // "TOLE": { id: "<@682785410077687817>", showName: 2, notification: msg }            
+            
+        };
+
+
+        const discordNames = {
+            
+            "AIRBORJES4": "Airborjes4",
+            "ALLEN": "Allen",
+            "ASABIITOSBAA": "Asabiitosbaa",
+            "BEEVEN": "Beeven",
+            "BUILDMASTERDREADZ": "Buildmasterdreadz",
+            "CAP": "Cap",
+            "DARDAR": "Dardar",
+            "EVILJAYSEN": "Eviljaysen",
+            "FLOOFS": "Floofs",
+            "JAYSEN": "Jaysen",
+            "JC85": "JC85",
+            "JOEBOOMBANG": "Joeboombang",
+            "KOIVU": "Koivu",
+            "MUSCHI": "Muschi",
+            "NOT HEY": "Not Hey",
+            "ONKELRENE666": "OnkelRene666",
+            "PATRICKSPATZ": "PatrickSpatz",
+            "ЧОРНЫ КАШАК": "ЧОРНЫ КАШАК",
+            "ROBINHOOD": "RobinHood",
+            "SLOMO": "SloMo",
+            "TIGY": "Tigy",
+            "SIGY": "Sigy",
+            "STEFAN": "Stefan",
+            "ウォッカ中山": "ウォッカ中山",
+            "ぴよきち": "ぴよきち",
+            "鮭とば": "鮭とば",
+            "COM0815": "Com0815",
+            "DEINE MUTTER": "Deine Mutter",
+            "ERNI": "Erni",
+            "HAJABUBU": "HajaBubu",
+            "EW123": "Ew123",
+            "FREESILVER": "FreeSilver",
+            "HAMISH": "Hamish",
+            "HÜRZI": "Hürzi",
+            "HÜRZELER": "Hürzeler",
+            "JAZIL": "Jazil",
+            "KLOPS": "Klops",
+            "MATZE": "Matze",
+            "ROBMASTER": "RobMaster",
+            "ROBMASTER2": "RobMaster2",
+            "ROLI": "Roli",
+            "TIMÄÄ": "Timää",
+            "TBCAT": "TBCat",
+            "CHÄLLER": "Chäller",
+            "TONI": "Toni",
+            "DARKHELL": "DarkHell",
+            "DOKIAHATALMAS": "Dokiahatalmas",
+            "CATF1SH": "Catf1sh",
+            "SNOW": "Snow",
+            "りぷとん": "りぷとん (Lipton)",
+            "싸퐁피퐁": "싸퐁피퐁"    
+        };
+
+        // ===== FIREBASE INITIALISIERUNG =====
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Flagge für erstes Laden
+        let initialLoad = true;
+        // Speichere letzte GB-Farben
+        let lastGbColors = {};
+
+        // ===== HILFSFUNKTIONEN =====
+        function getTimeDiffString(timestamp) {
+            if (!timestamp) return "";
+            const now = new Date();
+            const then = new Date(timestamp);
+            const diffMs = now - then;
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffMinutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+            let diffString = "";
+            if (diffHours > 0) diffString += `${diffHours} Std. `;
+            diffString += `${diffMinutes} Min.`;
+            return `(vor ${diffString})`;
+        }
+
+        function getCountdownString(endTime) {
+            if (!endTime) return "";
+            const now = new Date();
+            const end = new Date(endTime);
+            const diffMs = end - now;
+
+            if (diffMs <= 0) return "abgelaufen";
+
+            const diffMinutes = Math.floor(diffMs / (1000 * 60));
+            const diffHours = Math.floor(diffMinutes / 60);
+            const remainingMinutes = diffMinutes % 60;
+
+            let diffString = "";
+            if (diffHours > 0) diffString += `${diffHours}h `;
+            diffString += `${remainingMinutes}m`;
+            return `(noch ${diffString})`;
+        }
+
+        // ===== DISCORD BENACHRICHTIGUNGEN =====
+
+        // Hilfsfunktion: Sende 1-100 an GB Discord Webhook
+        function sendNumbersToDiscordGB() {
+            const webhookUrl = 'https://discordapp.com/api/webhooks/1489025162270474432/w5N6NCdVoqJLw77dQV4mMOTkE2d2qECYx02U4aWEQdYT60QrAfbvmu0ZMwTTm34-agqk';
+            let delay = 0;
+            for (let i = 1; i <= 100; i++) {
+                // Nach jeweils 20 Nachrichten 2 Sekunden Pause
+                if (i > 1 && (i - 1) % 39 === 0) {
+                    delay += 60000;
+                }
+                setTimeout(() => {
+                    fetch(webhookUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ content: `Nummer: ${i}` })
+                    }).then(() => {
+                        console.log(`Nummer ${i} an Discord gesendet.`);
+                    }).catch(err => {
+                        console.error('Fehler beim Senden an Discord:', err);
+                    });
+                }, delay + i * 500);
+            }
+        }
+        function sendDiscordNotification(player, vehicle, status) {
+            const config = discordConfig[player] || { id: `@${player}`, showName: 0, notification: 0 };
+            if (config.notification === 0) return;
+
+            // Eindeutiger Schlüssel für diese Benachrichtigung
+            const notificationKey = `${player}-${vehicle}-${status}-${Date.now()}`;
+            const now = Date.now();
+
+            // Prüfe auf doppelte Benachrichtigungen in den letzten 60 Sekunden
+            const recentKeys = Array.from(sentNotifications.keys()).filter(key => {
+                const keyTime = sentNotifications.get(key);
+                return now - keyTime < 60000 && key.startsWith(`${player}-${vehicle}-${status}`);
+            });
+
+            if (recentKeys.length > 0) {
+                console.log(`Doppelte Benachrichtigung verhindert: ${player}-${vehicle}-${status}`);
+                return;
+            }
+
+            // Speichere diese Benachrichtigung
+            sentNotifications.set(notificationKey, now);
+
+            // Bereinige alte Einträge
+            sentNotifications.forEach((time, key) => {
+                if (now - time > 300000) {
+                    sentNotifications.delete(key);
+                }
+            });
+
+            // Für GB-Status: Sammle Benachrichtigungen
+            if (status.startsWith('GB')) {
+                addToGbQueue(player, vehicle, status);
+                return;
+            }
+
+
+            
+            // Bestimme die richtige Webhook-URL basierend auf dem Status
+            let webhookUrl;
+            if (status.startsWith('GB')) {
+                webhookUrl = 'https://discordapp.com/api/webhooks/1489025162270474432/w5N6NCdVoqJLw77dQV4mMOTkE2d2qECYx02U4aWEQdYT60QrAfbvmu0ZMwTTm34-agqk';
+            } else {
+                // webhookUrl = 'https://discordapp.com/api/webhooks/1457170602673700894/3SHhHSwXQ6Cq5PLiJ1LyCUGz-Uytevtsv18uF5vYSPC3VgLaCmSFGWM77Lk3LW7B6Vju';
+                webhookUrl = 'https://discordapp.com/api/webhooks/1495175798297067740/cdgROd9wD6PnCgKYbpdPuCT2SCwP4H2zmbl5_7C0z6CSyiFQAlDhRN-VCiuI4O0nnqus';
+            }
+            
+            
+            const select = document.querySelector(`select[data-player="${player}"][data-vehicle="${vehicle}"]`);
+            const discordName = discordNames[player] || player;
+
+            // Bestimme den anzuzeigenden Status
+            let displayStatus = status;
+            let originalGB = '';
+
+            // Für gekillt-Status: Prüfe auf originalGB
+            if (status === 'gekillt') {
+                if (select && select.dataset.originalGB && select.dataset.originalGB.startsWith('GB')) {
+                    originalGB = select.dataset.originalGB;
+                    const gbNumber = originalGB.substring(2); // GB1 -> 1
+                    displayStatus = `gekillt-${gbNumber}`;
+                }
+            }
+            // Für gekillt-GB Status: Extrahiere GB-Nummer
+            else if (status.startsWith('gekillt-GB')) {
+                const gbNumber = status.substring(8); // gekillt-GB1 -> 1
+                displayStatus = `gekillt-${gbNumber}`;
+            }
+
+            // Erstelle die Nachricht basierend auf der Konfiguration
+            let message;
+
+            // Funktion zum Senden der Nachricht mit 500ms Delay
+            function sendWithDelay() {
+                // Für gekillt-Status
+                if (status === 'gekillt' || status.startsWith('gekillt-')) {
+                    // Speichere originalGB im Dataset, falls noch nicht vorhanden
+                    if (select && !select.dataset.originalGB && select.dataset.lastValue && select.dataset.lastValue.startsWith('GB')) {
+                        select.dataset.originalGB = select.dataset.lastValue;
+                        originalGB = select.dataset.lastValue;
+
+                        // Aktualisiere auch in Firebase
+                        const updates = {};
+                        updates[`${player}/Fahrzeug ${vehicle}/originalGB`] = originalGB;
+                        database.ref('Spieler').update(updates);
+                    }
+
+                    // Erstelle die Nachricht basierend auf der Konfiguration "gesetzte FZ Discord"
+                    if (config.notification === 1) {
+                        // Immer das Format: [Nummer] - [Name] Fz[Nummer]
+                        let gbNumber = '';
+                        if (originalGB && originalGB.startsWith('GB')) {
+                            gbNumber = originalGB.substring(2);
+                        } else if (displayStatus.startsWith('gekillt-')) {
+                            gbNumber = displayStatus.replace('gekillt-', '');
+                        }
+                        if (gbNumber) {
+                            message = `${gbNumber} - ${discordName}-${vehicle}`;
+                        } else {
+                            message = `${displayStatus} ${discordName}-${vehicle}`;
+                        }
+                    } else if (config.notification === 2) {
+                        let gbNumber = '';
+                        if (originalGB && originalGB.startsWith('GB')) {
+                            gbNumber = originalGB.substring(2);
+                        } else if (displayStatus.startsWith('gekillt-')) {
+                            gbNumber = displayStatus.replace('gekillt-', '');
+                        }
+                        if (gbNumber) {
+                            message = `${gbNumber} - ${config.id}`;
+                            if (config.showName >= 1) message += ` ${discordName}`;
+                            message += `-${vehicle}`;
+                        } else {
+                            message = `${displayStatus} ${config.id}`;
+                            if (config.showName >= 1) message += ` ${discordName}`;
+                            message += `-${vehicle}`;
+                        }
+                    }
+
+                    // Sende mit fetch für bessere Zuverlässigkeit
+                    fetch(webhookUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            content: message
+                        })
+                    }).then(response => {
+                        console.log(`Discord-Benachrichtigung gesendet: ${message}`);
+                    }).catch(error => {
+                        console.error('Fehler beim Senden der Discord-Benachrichtigung:', error);
+                    });
+                    return;
+                }
+
+                // Für GB-Status: immer das Format von notification: 1, egal ob notification 1 oder 2
+                if ((config.notification === 1 || config.notification === 2) && status.startsWith('GB')) {
+                    const gbNumber = status.substring(2);
+                    message = `${gbNumber} - ${discordName}-${vehicle}`;
+                } else if (config.notification === 1) {
+                    message = `${displayStatus} ${discordName}-${vehicle}`;
+                } else {
+                    // Für alle anderen notification-Werte keine Nachricht für GB-Status
+                    return;
+                }
+
+                // Sende mit fetch für bessere Zuverlässigkeit
+                fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        content: message
+                    })
+                }).then(response => {
+                    console.log(`Discord-Benachrichtigung gesendet: ${message}`);
+                }).catch(error => {
+                    console.error('Fehler beim Senden der Discord-Benachrichtigung:', error);
+                });
+            }
+
+            // 500ms Delay vor dem Senden
+            setTimeout(sendWithDelay, 500);
+        }
+
+        // Neue Funktion: GB-Benachrichtigungen sammeln
+        function addToGbQueue(player, vehicle, status) {
+            const gbNumber = status.substring(2);
+
+            if (!gbNotificationQueue.has(gbNumber)) {
+                gbNotificationQueue.set(gbNumber, []);
+            }
+
+            const discordName = discordNames[player] || player;
+            gbNotificationQueue.get(gbNumber).push(`${discordName}-${vehicle}`);
+
+            // Timer zurücksetzen
+            if (gbNotificationTimer) {
+                clearTimeout(gbNotificationTimer);
+            }
+
+            // Nach 3 Sekunden alle gesammelten Nachrichten senden
+            gbNotificationTimer = setTimeout(sendGroupedGbNotifications, 3000);
+        }
+
+        // Neue Funktion: Gesammelte GB-Benachrichtigungen senden (car-set)
+        function sendGroupedGbNotifications() {
+            const webhookUrl = 'https://discordapp.com/api/webhooks/1458185530406735873/g5HRS9ERd_hR1ZfsF6vsjgjoOFKqicbj3-eFjboUZEoXQ_XIWfDoc6HvvwhT-W8LtLeL';
+
+            const lines = [...gbNotificationQueue.entries()]
+                .sort((a, b) => Number(a[0]) - Number(b[0]))
+                .flatMap(([gbNumber, vehicles]) => vehicles.map(vehicle => `${gbNumber} - ${vehicle}`));
+
+            if (lines.length > 0) {
+                fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ content: lines.join('\n') })
+                }).then(() => {
+                    console.log(`GB Gruppennachricht gesendet: ${lines.join(', ')}`);
+                }).catch(error => {
+                    console.error('Fehler beim Senden der GB-Gruppennachricht:', error);
+                });
+            }
+
+            // Queue leeren
+            gbNotificationQueue.clear();
+            gbNotificationTimer = null;
+        }
+
+        // ===== UI UPDATE FUNKTIONEN =====
+        function updateCellColor(select) {
+            const cell = select.parentElement;
+            cell.className = 'vehicle-cell';
+            const value = select.value;
+
+            const timestampElement = cell.querySelector('.time-stamp') || document.createElement('span');
+            timestampElement.className = 'time-stamp';
+
+            if (value !== "Rep") {
+                const repInput = cell.querySelector('.rep-time-input');
+                if (repInput) repInput.style.display = 'none';
+            }
+
+            if (value && value !== '') {
+                if (select.value !== select.dataset.lastValue) {
+                    if (value === "Rep") {
+                        let minutes = parseInt(select.dataset.repMinutes) || DEFAULT_REP_MINUTES;
+                        const inputMinutes = prompt("Reparaturzeit in Minuten (1-120):", minutes);
+
+                        if (inputMinutes !== null) {
+                            minutes = parseInt(inputMinutes) || DEFAULT_REP_MINUTES;
+                            if (minutes < 1) minutes = 1;
+                            if (minutes > 120) minutes = 120;
+
+                            select.dataset.repMinutes = minutes;
+                            const endTime = new Date();
+                            endTime.setMinutes(endTime.getMinutes() + minutes);
+                            select.dataset.endTime = endTime.toISOString();
+                        } else {
+                            select.value = select.dataset.lastValue || '';
+                            updateCellColor(select);
+                            updateRowColor(select.closest('tr'));
+                            return;
+                        }
+                    }
+
+                    select.dataset.originalTime = new Date().toISOString();
+                    select.dataset.lastValue = select.value;
+
+                    if (value === "gekillt" || value.startsWith("gekillt-")) {
+                        const endTime = new Date();
+                        endTime.setHours(endTime.getHours() + 2);
+                        select.dataset.endTime = endTime.toISOString();
+                    }
+                }
+
+                const timestamp = select.dataset.originalTime;
+                const formattedTime = new Date(timestamp).toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                timestampElement.innerHTML = ` - ${formattedTime} <span class="duration">${getTimeDiffString(timestamp)}</span>`;
+
+                if (value === "Rep" || value === "gekillt" || value.startsWith("gekillt-")) {
+                    const endTime = select.dataset.endTime;
+                    if (endTime) {
+                        timestampElement.innerHTML += ` <span class="countdown" data-end-time="${endTime}">${getCountdownString(endTime)}</span>`;
+                    }
+                }
+
+                timestampElement.dataset.originalTime = timestamp;
+            } else {
+                timestampElement.textContent = '';
+                delete select.dataset.originalTime;
+                delete select.dataset.lastValue;
+                delete select.dataset.endTime;
+                delete select.dataset.repMinutes;
+            }
+
+            if (!cell.contains(timestampElement)) {
+                cell.appendChild(timestampElement);
+            }
+
+            // Styling anwenden
+            const originalGB = select.dataset.originalGB;
+            if (value === 'gekillt' && originalGB && originalGB.startsWith('GB')) {
+                select.value = originalGB;
+                select.style.backgroundColor = '#fd4444';
+                select.style.color = 'white';
+                cell.className = 'vehicle-cell gekillt-selection';
+            } else if (value.startsWith('gekillt-')) {
+                select.style.backgroundColor = '#fd4444';
+                select.style.color = 'white';
+                cell.className = 'vehicle-cell gekillt-selection';
+            } else {
+                select.style.backgroundColor = '';
+                select.style.color = '';
+                cell.className = 'vehicle-cell ' + (
+                    value === '' ? 'no-selection' :
+                        value === 'bereit' ? 'bereit-selection' :
+                            value === 'gekillt' ? 'gekillt-selection' :
+                                value.startsWith('GB') ? `${value.toLowerCase()}-selection` :
+                                    value === 'Rep' ? 'rep-selection' :
+                                        value === 'Res' ? 'res-selection' : ''
+                );
+            }
+        }
+
+        function updateRowColor(row) {
+            const selects = row.querySelectorAll('select:not(.reps-select)');
+            let allSet = true;
+            let hasRep = false;
+            let hasRes = false;
+            let hasGB = false;
+
+            selects.forEach(select => {
+                const value = select.value;
+                if (value === '') allSet = false;
+                else if (value === 'Rep') hasRep = true;
+                else if (value === 'Res') hasRes = true;
+                else if (value.startsWith('GB')) hasGB = true;
+            });
+
+            const nameCell = row.querySelector('.player-name');
+            nameCell.className = 'player-name';
+
+            if (allSet) nameCell.classList.add('all-set');
+            if (hasRep) nameCell.classList.add('has-rep');
+            if (hasRes) nameCell.classList.add('has-res');
+            if (hasGB) nameCell.classList.add('has-gb');
+
+            // Reps-Zelle einfärben
+            const repsCell = row.querySelector('.reps-cell');
+            const repsSelect = row.querySelector('.reps-select');
+            if (repsCell && repsSelect) {
+                const repsValue = parseInt(repsSelect.value);
+                repsCell.classList.remove('reps-cell-empty', 'reps-cell-0', 'reps-cell-1-2', 'reps-cell-3-19');
+
+                if (repsSelect.value === '' || isNaN(repsValue)) {
+                    repsCell.classList.add('reps-cell-empty');
+                } else if (repsValue === 0) {
+                    repsCell.classList.add('reps-cell-0');
+                } else if (repsValue >= 1 && repsValue <= 2) {
+                    repsCell.classList.add('reps-cell-1-2');
+                } else if (repsValue >= 3 && repsValue <= 19) {
+                    repsCell.classList.add('reps-cell-3-19');
+                }
+            }
+        }
+
+        function updateFreeVehiclesCount() {
+            let usedCount = 0;
+            document.querySelectorAll('select:not(.reps-select)').forEach(select => {
+                if (select.value !== '' && select.value !== 'bereit' && select.value !== 'gekillt') {
+                    usedCount++;
+                }
+            });
+            document.getElementById('free-vehicles-count').textContent = MAX_VEHICLES - usedCount;
+        }
+
+        function updateStatusOverview() {
+            const statusGroups = {
+                GB1: [], GB2: [], GB3: [], GB4: [], GB5: [], GB6: [],
+                Rep: [], Res: [], bereit: [], gekillt: []
+            };
+
+            document.querySelectorAll('select').forEach(select => {
+                const player = select.dataset.player;
+                const value = select.value;
+
+                if (value && value.startsWith('gekillt-')) {
+                    statusGroups['gekillt'].push({
+                        name: player,
+                        time: select.dataset.originalTime || '',
+                        vehicle: select.dataset.vehicle,
+                        endTime: select.dataset.endTime || '',
+                        repMinutes: select.dataset.repMinutes || ''
+                    });
+                } else if (value && statusGroups[value]) {
+                    statusGroups[value].push({
+                        name: player,
+                        time: select.dataset.originalTime || '',
+                        vehicle: select.dataset.vehicle,
+                        endTime: select.dataset.endTime || '',
+                        repMinutes: select.dataset.repMinutes || ''
+                    });
+                }
+            });
+
+            const overview = document.getElementById('status-overview');
+            overview.innerHTML = '';
+
+            const displayOrder = ['GB1', 'GB2', 'GB3', 'GB4', 'GB5', 'GB6', 'Rep', 'Res', 'bereit', 'gekillt'];
+
+            displayOrder.forEach(status => {
+                const players = statusGroups[status];
+                if (players.length === 0) return;
+
+                // Sortiere nach Zeitdifferenz (längste zuerst), dann nach players-Array Reihenfolge
+                players.sort((a, b) => {
+                    if (a.time && b.time) {
+                        const now = new Date();
+                        const diffA = Math.floor((now - new Date(a.time)) / (1000 * 60));
+                        const diffB = Math.floor((now - new Date(b.time)) / (1000 * 60));
+                        if (diffA !== diffB) return diffB - diffA;
+                    } else if (a.time !== b.time) {
+                        return a.time ? -1 : 1;
+                    }
+                    return players.indexOf(a.name) - players.indexOf(b.name);
+                });
+
+                const section = document.createElement('div');
+                section.className = 'status-section';
+
+                const header = document.createElement('div');
+                header.className = 'status-header';
+
+                const colorBox = document.createElement('span');
+                colorBox.className = 'status-color';
+                colorBox.style.backgroundColor = getComputedStyle(document.querySelector(`option[value="${status}"]`))?.backgroundColor || '#f0f0f0';
+
+                header.appendChild(colorBox);
+                header.appendChild(document.createTextNode(`${status} (${players.length})`));
+
+                const playerList = document.createElement('div');
+                playerList.className = 'player-list';
+
+                players.forEach(player => {
+                    const playerItem = document.createElement('span');
+                    playerItem.className = 'player-item';
+
+                    const timeDiff = getTimeDiffString(player.time);
+                    const timeString = player.time ? new Date(player.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
+                    let additionalInfo = '';
+                    if (status === 'Rep') {
+                        additionalInfo = `<br><span class="player-time">${player.repMinutes || DEFAULT_REP_MINUTES} Min.</span>`;
+                    }
+                    if (status === 'Rep' || status === 'gekillt') {
+                        additionalInfo += `<br><span class="player-time">${getCountdownString(player.endTime)}</span>`;
+                    }
+
+                    playerItem.innerHTML = `${player.name} (Fz${player.vehicle})<br>
+                                          <span class="player-time">${timeString} ${timeDiff}</span>${additionalInfo}`;
+
+                    playerList.appendChild(playerItem);
+                });
+
+                section.appendChild(header);
+                section.appendChild(playerList);
+                overview.appendChild(section);
+            });
+        }
+
+        function updateAllDurations() {
+            document.querySelectorAll('.time-stamp .duration').forEach(element => {
+                const timestamp = element.closest('.time-stamp').dataset.originalTime;
+                if (timestamp) {
+                    element.textContent = ' ' + getTimeDiffString(timestamp);
+                }
+            });
+
+            document.querySelectorAll('.time-stamp .countdown').forEach(element => {
+                const endTime = element.dataset.endTime;
+                if (endTime) {
+                    const countdown = getCountdownString(endTime);
+                    element.textContent = ' ' + countdown;
+
+                    if (countdown === "abgelaufen") {
+                        const select = element.closest('.vehicle-cell').querySelector('select');
+                        if (select && (select.value === "Rep" || select.value === "gekillt" || select.value.startsWith("gekillt-"))) {
+                            select.value = "bereit";
+                            select.dataset.lastValue = "bereit";
+                            delete select.dataset.endTime;
+                            delete select.dataset.repMinutes;
+                            delete select.dataset.originalGB;
+
+                            const updates = {};
+                            const player = select.dataset.player;
+                            const vehicle = select.dataset.vehicle;
+
+                            updates[`${player}/Fahrzeug ${vehicle}/Gebäude`] = "bereit";
+                            updates[`${player}/Fahrzeug ${vehicle}/endTime`] = "";
+                            updates[`${player}/Fahrzeug ${vehicle}/repMinutes`] = "";
+                            updates[`${player}/Fahrzeug ${vehicle}/originalGB`] = "";
+                            updates[`${player}/Fahrzeug ${vehicle}/timestamp`] = new Date().toISOString();
+
+                            database.ref('Spieler').update(updates).then(() => {
+                                updateCellColor(select);
+                                updateRowColor(select.closest('tr'));
+                                updateFreeVehiclesCount();
+                                updateStatusOverview();
+                            });
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateGbTimestamps(data) {
+            const container = document.getElementById('gb-timestamps-container');
+            if (!container) return;
+
+            if (!data) {
+                container.innerHTML = '<div class="gb-timestamp-item">Keine Daten verfügbar</div>';
+                return;
+            }
+
+            let html = '<div class="gb-timestamp-grid">';
+            let gbEmojis = {};
+
+            for (let i = 1; i <= 6; i++) {
+                const gbKey = `GB${i}`;
+                const gbData = data[gbKey] || {};
+
+                // Timestamp-Daten
+                const timestamp = typeof gbData === 'string' ? gbData : gbData.timestamp || gbData || '';
+                let timeString = 'nie';
+                let timeDiff = '';
+
+                if (timestamp) {
+                    try {
+                        const dateObj = new Date(timestamp);
+                        if (!isNaN(dateObj.getTime())) {
+                            timeString = dateObj.toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            });
+                            timeDiff = getTimeDiffString(timestamp);
+                        }
+                    } catch (e) {
+                        console.error(`Fehler beim Parsen von GB${i} Timestamp:`, e);
+                    }
+                }
+
+                // Farb-Daten
+                const farbe = gbData.farbe || 'Unbekannt';
+                const backgroundColor = farbe.toLowerCase() === 'blau' ? '#4179D9' :
+                    farbe.toLowerCase() === 'rot' ? '#FF0000' : '#808080';
+
+                // Für Discord werden alle GBs verwendet
+
+                html += `
+                    <div class="gb-timestamp-item" style="background-color: ${backgroundColor}; color: white;">
+                        <div class="gb-name">GB${i}</div>
+                        <div class="gb-time">${timeString} ${timeDiff}</div>
+                    </div>
+                `;
+            }
+
+            // Prüfe auf Änderungen und sammle sie
+            let hasChanges = false;
+            let needsPing = false;
+
+            for (let i = 1; i <= 6; i++) {
+                const gbKey = `GB${i}`;
+                const gbData = data[gbKey] || {};
+                const farbe = gbData.farbe || 'Unbekannt';
+
+                if (lastGbColors[gbKey] !== farbe) {
+                    hasChanges = true;
+                    // Prüfe ob von Blau auf etwas anderes gewechselt wurde
+                    if (lastGbColors[gbKey] === 'Blau' && farbe !== 'Blau' && farbe !== 'Unbekannt') {
+                        needsPing = true;
+                    }
+                    lastGbColors[gbKey] = farbe;
+                }
+            }
+
+            // Discord Nachricht nur bei Änderungen senden
+            if (hasChanges && !initialLoad) {
+                // Prüfe ob alle 6 GBs grau sind (Programm abgestürzt)
+                let allGray = true;
+                for (let i = 1; i <= 6; i++) {
+                    const gbData = data[`GB${i}`] || {};
+                    const farbe = gbData.farbe || 'Unbekannt';
+                    if (farbe !== 'Unbekannt') {
+                        allGray = false;
+                        break;
+                    }
+                }
+
+                // Keine Nachricht senden wenn alle GBs grau sind
+                if (allGray) {
+                    console.log('Alle GBs sind grau - keine Discord-Nachricht gesendet (Programm möglicherweise abgestürzt)');
+                    return;
+                }
+
+                // Hole alle GB-Emojis mit Nummern (auch Unbekannt als ⚪)
+                const getEmojiWithNumber = (i) => {
+                    const gbData = data[`GB${i}`] || {};
+                    const farbe = gbData.farbe || 'Unbekannt';
+                    const emoji = farbe === 'Rot' ? '🔴' :
+                        farbe === 'Blau' ? '🔵' : '⚪';
+
+                    // Nummern 1-3 vor Emoji, 4-6 nach Emoji
+                    return i <= 3 ? `${i}${emoji}` : `${emoji}${i}`;
+                };
+
+                // V-förmiges Muster mit Abständen
+                let discordMessage = `${getEmojiWithNumber(1)}\u2003\u2003\u2003\u2003${getEmojiWithNumber(6)}\n\u2003${getEmojiWithNumber(2)}\u2003\u2003${getEmojiWithNumber(5)}\u2003\n\u2003\u2003${getEmojiWithNumber(3)}${getEmojiWithNumber(4)}\u2003\u2003`;
+
+                if (needsPing) {
+                    discordMessage = `<@&1454914528847466686>\n${discordMessage}`; 
+                }
+
+                clearTimeout(window.gbUpdateTimeout);
+                window.gbUpdateTimeout = setTimeout(() => {
+                    const webhookUrl = 'https://discordapp.com/api/webhooks/1458186545365385340/y31xC9qA7a-wVDOTVZlZMuZqdrhTBlBas9w3gnpSBYM_rexnLotfllcD8zhx11ahFTHk';
+                    fetch(webhookUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ content: discordMessage })
+                    }).catch(() => { });
+                }, 1000);
+            }
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // ===== FIREBASE FUNKTIONEN =====
+        function saveVehicleToFirebase(player, vehicle, data) {
+            const updates = {};
+            const vehicleKey = `Fahrzeug ${vehicle}`;
+
+            updates[`${player}/${vehicleKey}/Gebäude`] = data.status;
+            updates[`${player}/${vehicleKey}/Slot`] = data.status.startsWith('GB') ? data.status : '';
+            updates[`${player}/${vehicleKey}/timestamp`] = data.timestamp;
+            updates[`${player}/${vehicleKey}/endTime`] = data.endTime || '';
+            updates[`${player}/${vehicleKey}/repMinutes`] = data.repMinutes || '';
+
+            // Speichere originalGB, wenn vorhanden
+            if (data.originalGB) {
+                updates[`${player}/${vehicleKey}/originalGB`] = data.originalGB;
+            }
+
+            return database.ref('Spieler').update(updates);
+        }
+
+        function saveDataToFirebase() {
+            const data = getCurrentData();
+            const updates = {};
+
+            for (const player in data) {
+                for (const vehicleKey in data[player]) {
+                    if (vehicleKey.startsWith('Fahrzeug')) {
+                        const vehicleData = data[player][vehicleKey];
+                        updates[`${player}/${vehicleKey}/Gebäude`] = vehicleData.Gebäude;
+                        updates[`${player}/${vehicleKey}/Slot`] = vehicleData.Slot;
+                        updates[`${player}/${vehicleKey}/timestamp`] = vehicleData.timestamp;
+                        updates[`${player}/${vehicleKey}/endTime`] = vehicleData.endTime;
+                        updates[`${player}/${vehicleKey}/repMinutes`] = vehicleData.repMinutes;
+                        updates[`${player}/${vehicleKey}/originalGB`] = vehicleData.originalGB || '';
+                    }
+                }
+                const repsSelect = document.querySelector(`.reps-select[data-player="${player}"]`);
+                if (repsSelect) {
+                    const repsValue = parseInt(repsSelect.value);
+                    updates[`${player}/Reps`] = isNaN(repsValue) ? "" : repsValue;
+                }
+            }
+
+            return database.ref('Spieler').update(updates);
+        }
+
+        function getCurrentData() {
+            const data = {};
+            document.querySelectorAll('select').forEach(select => {
+                const player = select.dataset.player;
+                if (!data[player]) data[player] = {};
+
+                if (select.classList.contains('reps-select')) {
+                    data[player].Reps = parseInt(select.value) || "";
+                } else {
+                    const vehicleNum = select.dataset.vehicle;
+                    if (vehicleNum) {
+                        const vehicleKey = `Fahrzeug ${vehicleNum}`;
+                        data[player][vehicleKey] = {
+                            Gebäude: select.value,
+                            Slot: select.value.startsWith('GB') ? select.value : '',
+                            timestamp: select.dataset.originalTime || '',
+                            endTime: select.dataset.endTime || '',
+                            repMinutes: select.dataset.repMinutes || '',
+                            originalGB: select.dataset.originalGB || ''
+                        };
+                    }
+                }
+            });
+            return data;
+        }
+
+        function applyData(data) {
+            // Nach dem Laden die Flagge zurücksetzen (am Ende der Funktion)
+            const resetInitialLoad = () => initialLoad = false;
+            setTimeout(resetInitialLoad, 1000);
+
+            players.forEach(player => {
+                for (let i = 1; i <= 3; i++) {
+                    const vehicleKey = `Fahrzeug ${i}`;
+                    const select = document.querySelector(`select[data-player="${player}"][data-vehicle="${i}"]`);
+                    if (select && data[player] && data[player][vehicleKey]) {
+                        const vehicleData = data[player][vehicleKey];
+
+                        const shouldUpdate = (
+                            select.value !== "gekillt" ||
+                            !select.dataset.endTime ||
+                            new Date(select.dataset.endTime) <= new Date()
+                        );
+
+                        if (shouldUpdate) {
+                            const oldValue = select.value;
+                            const newValue = vehicleData.Gebäude || '';
+
+                            // Nur wenn sich der Wert tatsächlich ändert
+                            const valueChanged = oldValue !== newValue;
+
+                            select.value = newValue;
+                            select.dataset.originalTime = vehicleData.timestamp || '';
+                            select.dataset.lastValue = newValue;
+                            select.dataset.endTime = vehicleData.endTime || '';
+                            select.dataset.repMinutes = vehicleData.repMinutes || '';
+                            select.dataset.originalGB = vehicleData.originalGB || '';
+
+                            // Stelle sicher, dass gekillt-Status immer eine endTime haben
+                            if ((newValue === 'gekillt' || newValue.startsWith('gekillt-')) && !vehicleData.endTime) {
+                                const endTime = new Date();
+                                endTime.setHours(endTime.getHours() + 2);
+                                select.dataset.endTime = endTime.toISOString();
+
+                                // Aktualisiere auch in Firebase
+                                const updates = {};
+                                updates[`${player}/${vehicleKey}/endTime`] = endTime.toISOString();
+                                database.ref('Spieler').update(updates);
+                            }
+
+                            // Discord-Benachrichtigung nur bei echter Änderung und nicht beim initialen Laden
+                            if (!initialLoad && valueChanged) {
+                                if (newValue && newValue.startsWith('GB') && !newValue.startsWith('gekillt-')) {
+                                    setTimeout(() => {
+                                        sendDiscordNotification(player, i, newValue);
+                                    }, 100);
+                                } else if (newValue && (newValue === 'gekillt' || newValue.startsWith('gekillt-'))) {
+                                    setTimeout(() => {
+                                        sendDiscordNotification(player, i, 'gekillt');
+                                    }, 100);
+                                }
+                            }
+
+                            updateCellColor(select);
+                        }
+                    }
+                }
+
+                const repsSelect = document.querySelector(`.reps-select[data-player="${player}"]`);
+                if (repsSelect && data[player] && data[player].Reps !== undefined) {
+                    repsSelect.value = data[player].Reps;
+                    updateRowColor(repsSelect.closest('tr'));
+                }
+            });
+
+            updateFreeVehiclesCount();
+            updateStatusOverview();
+        }
+
+        function resetAll() {
+            console.log('resetAll aufgerufen');
+            if (confirm('Alle Fahrzeugzuweisungen wirklich zurücksetzen?')) {
+                console.log('Benutzer hat bestätigt');
+                const updates = {};
+                players.forEach(player => {
+                    const cleanPlayer = player.replace(/^-/, '_'); // Ersetze führenden Bindestrich
+                    updates[`${cleanPlayer}/Reps`] = "";
+                    for (let i = 1; i <= 3; i++) {
+                        const vehicleKey = `Fahrzeug ${i}`;
+                        updates[`${cleanPlayer}/${vehicleKey}/Gebäude`] = "";
+                        updates[`${cleanPlayer}/${vehicleKey}/Slot`] = "";
+                        updates[`${cleanPlayer}/${vehicleKey}/timestamp`] = "";
+                        updates[`${cleanPlayer}/${vehicleKey}/endTime`] = "";
+                        updates[`${cleanPlayer}/${vehicleKey}/repMinutes`] = "";
+                        updates[`${cleanPlayer}/${vehicleKey}/originalGB`] = "";
+                    }
+                });
+                
+                console.log('Updates:', updates);
+                
+                database.ref('Spieler').update(updates).then(() => {
+                    console.log('Firebase Update erfolgreich');
+                    document.querySelectorAll('select').forEach(select => {
+                        select.value = '';
+                        select.dataset.originalTime = '';
+                        select.dataset.lastValue = '';
+                        select.dataset.endTime = '';
+                        select.dataset.repMinutes = '';
+                        select.dataset.originalGB = '';
+                        updateCellColor(select);
+                        updateRowColor(select.closest('tr'));
+                    });
+                    updateFreeVehiclesCount();
+                    updateStatusOverview();
+                    console.log('UI Update abgeschlossen');
+                }).catch(error => {
+                    console.error('Firebase Fehler:', error);
+                });
+            } else {
+                console.log('Benutzer hat abgebrochen');
+            }
+        }
+
+        // ===== ECHTZEIT SYNCHRONISATION =====
+        function setupRealtimeSync() {
+            const statusElement = document.getElementById('sync-status');
+            const dataRef = database.ref('Spieler');
+            const gbRef = database.ref('Gebaeude');
+
+            database.ref('.info/connected').on('value', (snapshot) => {
+                if (snapshot.val() === true) {
+                    statusElement.textContent = "Verbunden - Synchronisation aktiv";
+                    statusElement.className = "sync-status online";
+                } else {
+                    statusElement.textContent = "Offline - Nur lokale Änderungen";
+                    statusElement.className = "sync-status offline";
+                }
+            });
+
+            dataRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    applyData(data);
+                }
+            });
+
+            gbRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                updateGbTimestamps(data);
+            });
+
+            setInterval(updateAllDurations, 60 * 1000);
+            // Überprüfe regelmäßig alle gekillt-Status
+            setInterval(checkAllKilledStatuses, 60 * 1000);
+        }
+
+        // ===== TABELLE ERSTELLEN =====
+        function createTable() {
+            const tableBody = document.getElementById('player-table');
+            players.forEach(player => {
+                const row = document.createElement('tr');
+
+                // Spielername
+                const nameCell = document.createElement('td');
+                nameCell.className = 'player-name';
+                nameCell.textContent = player;
+                row.appendChild(nameCell);
+
+                // Reps-Zelle
+                const repsCell = document.createElement('td');
+                repsCell.className = 'reps-cell';
+                const repsSelect = document.createElement('select');
+                repsSelect.className = 'reps-select';
+                repsSelect.dataset.player = player;
+
+                for (let i = 0; i <= 19; i++) {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = i;
+                    repsSelect.appendChild(option);
+                }
+                repsSelect.value = ""; // Standardwert leer
+
+                repsSelect.addEventListener('change', function () {
+                    const player = this.dataset.player;
+                    const repsValue = parseInt(this.value);
+                    const updates = {};
+                    updates[`${player}/Reps`] = isNaN(repsValue) ? "" : repsValue;
+                    
+                    database.ref('Spieler').update(updates).then(() => {
+                        console.log(`Reps für ${player} gespeichert: ${this.value}`);
+                    }).catch(error => {
+                        console.error('Fehler beim Speichern der Reps:', error);
+                    });
+                    
+                    updateRowColor(this.closest('tr'));
+                });
+
+                repsCell.appendChild(repsSelect);
+                row.appendChild(repsCell);
+
+                // Fahrzeug-Zellen
+                for (let i = 0; i < 3; i++) {
+                    const cell = document.createElement('td');
+                    cell.className = 'vehicle-cell no-selection';
+                    const select = document.createElement('select');
+                    select.dataset.player = player;
+                    select.dataset.vehicle = i + 1;
+
+                    select.addEventListener('change', function () {
+                        const oldValue = this.dataset.lastValue || '';
+                        const newValue = this.value;
+                        const player = this.dataset.player;
+                        const vehicle = this.dataset.vehicle;
+
+                        // Wenn auf ein Gebäude gesetzt wird, originalGB immer setzen
+                        if (newValue.startsWith('GB') && !newValue.startsWith('gekillt-')) {
+                            this.dataset.originalGB = newValue;
+                            // Sende die Benachrichtigung mit minimaler Verzögerung
+                            setTimeout(() => {
+                                sendDiscordNotification(player, vehicle, newValue);
+                            }, 100);
+                        } else if ((newValue === 'gekillt' || newValue.startsWith('gekillt-')) && oldValue.startsWith('GB')) {
+                            // Speichere das ursprüngliche GB, wenn ein Fahrzeug gekillt wird
+                            this.dataset.originalGB = oldValue;
+                            setTimeout(() => {
+                                sendDiscordNotification(player, vehicle, 'gekillt');
+                            }, 100);
+                        } else if ((newValue === 'gekillt' || newValue.startsWith('gekillt-'))) {
+                            // Sende die Benachrichtigung mit minimaler Verzögerung
+                            setTimeout(() => {
+                                sendDiscordNotification(player, vehicle, 'gekillt');
+                            }, 100);
+                        } else if (oldValue.startsWith('GB') && newValue !== oldValue) {
+                            // Wenn von GB auf etwas anderes (außer gekillt) gewechselt wird, originalGB löschen
+                            delete this.dataset.originalGB;
+                        }
+
+                        updateCellColor(this);
+                        updateRowColor(this.closest('tr'));
+                        updateFreeVehiclesCount();
+                        updateStatusOverview();
+
+                        // Stelle sicher, dass gekillt-Status immer eine endTime haben
+                        if ((newValue === 'gekillt' || newValue.startsWith('gekillt-')) && !this.dataset.endTime) {
+                            const endTime = new Date();
+                            endTime.setHours(endTime.getHours() + 2);
+                            this.dataset.endTime = endTime.toISOString();
+                        }
+
+                        const vehicleData = {
+                            status: newValue,
+                            timestamp: this.dataset.originalTime || new Date().toISOString(),
+                            endTime: this.dataset.endTime,
+                            repMinutes: this.dataset.repMinutes,
+                            originalGB: this.dataset.originalGB || ''
+                        };
+
+                        saveVehicleToFirebase(player, vehicle, vehicleData);
+                    });
+
+                    options.forEach(option => {
+                        const optionElement = document.createElement('option');
+                        optionElement.value = option.value;
+                        optionElement.textContent = option.text;
+
+                        if (option.value.startsWith('gekillt-')) {
+                            optionElement.style.display = 'none';
+                            optionElement.hidden = true;
+                            optionElement.disabled = true;
+                        }
+
+                        select.appendChild(optionElement);
+                    });
+
+                    cell.appendChild(select);
+                    row.appendChild(cell);
+                }
+                tableBody.appendChild(row);
+            });
+
+            setupRealtimeSync();
+            setInterval(updateAllDurations, 30000);
+            updateFreeVehiclesCount();
+            updateStatusOverview();
+        }
+
+        // ===== EVENT LISTENER =====
+        
+        // Reset Button Event Listener
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('reset-all').addEventListener('click', resetAll);
+            document.getElementById('reconnect-btn').addEventListener('click', function() {
+                database.goOffline();
+                setTimeout(() => { database.goOnline(); }, 3000);
+            });
+            console.log('Event Listeners hinzugefügt');
+        });
+
+        // Test-Funktion für GB-Farben
+        function testGbColors() {
+            database.ref('Gebaeude').once('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    // Hole alle GB-Emojis mit Nummern
+                    const getEmojiWithNumber = (i) => {
+                        const gbData = data[`GB${i}`] || {};
+                        const farbe = gbData.farbe || 'Unbekannt';
+                        const emoji = farbe === 'Rot' ? '🔴' :
+                            farbe === 'Blau' ? '🔵' : '⚪';
+
+                        // Nummern 1-3 vor Emoji, 4-6 nach Emoji
+                        return i <= 3 ? `${i}${emoji}` : `${emoji}${i}`;
+                    };
+
+                    // V-förmiges Muster
+                    const discordMessage = `${getEmojiWithNumber(1)}\u2003\u2003\u2003\u2003${getEmojiWithNumber(6)}\n\u2003${getEmojiWithNumber(2)}\u2003\u2003${getEmojiWithNumber(5)}\u2003\n\u2003\u2003${getEmojiWithNumber(3)}${getEmojiWithNumber(4)}\u2003\u2003`;
+
+                    // Sende an Discord
+                    const webhookUrl = 'https://discordapp.com/api/webhooks/1458186545365385340/y31xC9qA7a-wVDOTVZlZMuZqdrhTBlBas9w3gnpSBYM_rexnLotfllcD8zhx11ahFTHk';
+                    fetch(webhookUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ content: discordMessage })
+                    }).then(() => {
+                        console.log('Test-Nachricht gesendet');
+                    }).catch(error => {
+                        console.error('Fehler beim Senden der Test-Nachricht:', error);
+                    });
+                }
+            });
+        }
+
+        // ===== INITIALISIERUNG =====
+        document.addEventListener('DOMContentLoaded', function () {
+            createTable();
+            // Überprüfe alle gekillt-Status beim Laden der Seite
+            setTimeout(checkAllKilledStatuses, 2000);
+            // Überprüfe alte gekillt-Status (>6 Stunden)
+            setTimeout(resetOldKilledStatuses, 3000);
+        });
+
+        // Funktion zum Zurücksetzen alter gekillt-Status (>2 Stunden)
+        function resetOldKilledStatuses() {
+            const sixHoursAgo = new Date();
+            sixHoursAgo.setHours(sixHoursAgo.getHours() - 2);
+
+            let updates = {};
+            let count = 0;
+
+            document.querySelectorAll('select').forEach(select => {
+                if (select.value === "gekillt" || select.value.startsWith("gekillt-")) {
+                    // Fall 1: Kein endTime gesetzt
+                    // Fall 2: originalTime ist älter als 6 Stunden
+                    const originalTime = select.dataset.originalTime ? new Date(select.dataset.originalTime) : null;
+
+                    if (!select.dataset.endTime || (originalTime && originalTime < sixHoursAgo)) {
+                        console.log(`Zurücksetzen von altem gekillt-Status für ${select.dataset.player} Fz${select.dataset.vehicle}`);
+
+                        select.value = "bereit";
+                        select.dataset.lastValue = "bereit";
+                        delete select.dataset.endTime;
+                        delete select.dataset.repMinutes;
+                        delete select.dataset.originalGB;
+
+                        const player = select.dataset.player;
+                        const vehicle = select.dataset.vehicle;
+
+                        updates[`${player}/Fahrzeug ${vehicle}/Gebäude`] = "bereit";
+                        updates[`${player}/Fahrzeug ${vehicle}/endTime`] = "";
+                        updates[`${player}/Fahrzeug ${vehicle}/repMinutes`] = "";
+                        updates[`${player}/Fahrzeug ${vehicle}/originalGB`] = "";
+                        updates[`${player}/Fahrzeug ${vehicle}/timestamp`] = new Date().toISOString();
+
+                        updateCellColor(select);
+                        updateRowColor(select.closest('tr'));
+                        count++;
+                    }
+                }
+            });
+
+            if (count > 0) {
+                database.ref('Spieler').update(updates).then(() => {
+                    updateFreeVehiclesCount();
+                    updateStatusOverview();
+                    console.log(`${count} alte gekillt-Status wurden zurückgesetzt.`);
+                });
+            }
+        }
+
+        // Funktion zum Überprüfen aller gekillt-Status
+        function checkAllKilledStatuses() {
+            document.querySelectorAll('select').forEach(select => {
+                if (select.value === "gekillt" || select.value.startsWith("gekillt-")) {
+                    const endTime = select.dataset.endTime;
+                    if (endTime) {
+                        const now = new Date();
+                        const end = new Date(endTime);
+
+                        // Wenn die Zeit abgelaufen ist oder mehr als 2 Stunden vergangen sind
+                        if (now >= end) {
+                            console.log(`Zurücksetzen von abgelaufenem gekillt-Status für ${select.dataset.player} Fz${select.dataset.vehicle}`);
+
+                            select.value = "bereit";
+                            select.dataset.lastValue = "bereit";
+                            delete select.dataset.endTime;
+                            delete select.dataset.repMinutes;
+                            delete select.dataset.originalGB;
+
+                            const updates = {};
+                            const player = select.dataset.player;
+                            const vehicle = select.dataset.vehicle;
+
+                            updates[`${player}/Fahrzeug ${vehicle}/Gebäude`] = "bereit";
+                            updates[`${player}/Fahrzeug ${vehicle}/endTime`] = "";
+                            updates[`${player}/Fahrzeug ${vehicle}/repMinutes`] = "";
+                            updates[`${player}/Fahrzeug ${vehicle}/originalGB`] = "";
+                            updates[`${player}/Fahrzeug ${vehicle}/timestamp`] = new Date().toISOString();
+
+                            database.ref('Spieler').update(updates).then(() => {
+                                updateCellColor(select);
+                                updateRowColor(select.closest('tr'));
+                                updateFreeVehiclesCount();
+                                updateStatusOverview();
+                            });
+                        }
+                    } else {
+                        // Wenn kein endTime gesetzt ist, setze es jetzt
+                        const endTime = new Date();
+                        endTime.setHours(endTime.getHours() + 2);
+                        select.dataset.endTime = endTime.toISOString();
+
+                        const updates = {};
+                        const player = select.dataset.player;
+                        const vehicle = select.dataset.vehicle;
+
+                        updates[`${player}/Fahrzeug ${vehicle}/endTime`] = endTime.toISOString();
+                        database.ref('Spieler').update(updates);
+                    }
+                }
+            });
+        }
+
+        fetch(window.location.href)
+            .then(response => {
+                const lastModified = new Date(response.headers.get('Last-Modified'));
+                const dateElement = document.createElement('div');
+                dateElement.className = 'last-update';
+                dateElement.textContent = 'Letzte Änderung: ' + lastModified.toLocaleString('de-DE');
+                document.body.insertBefore(dateElement, document.querySelector('.controls'));
+            })
+            .catch(error => console.error('Fehler beim Abrufen des Änderungsdatums:', error));
+    </script>
+</body>
+
+</html>
