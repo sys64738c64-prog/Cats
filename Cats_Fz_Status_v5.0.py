@@ -1,4 +1,4 @@
-import pyautogui
+import pyautogui #test
 import mss
 import mss.tools
 import time
@@ -55,6 +55,8 @@ logger = logging.getLogger(__name__)
 
 pause_event = threading.Event()
 pause_event.set()
+pause_toggle_lock = threading.Lock()
+last_pause_toggle = 0.0
 
 # Windows-Konsolen-Konfiguration
 if sys.platform == "win32":
@@ -128,6 +130,14 @@ def check_escape():
         exit()
 
 def toggle_pause():
+    global last_pause_toggle
+    with pause_toggle_lock:
+        now = time.monotonic()
+        if now - last_pause_toggle < 0.3:
+            logger.debug("Doppeltes PAUSE-Signal ignoriert.")
+            return
+        last_pause_toggle = now
+
     if pause_event.is_set():
         pause_event.clear()
         logger.warning("PAUSE gedrückt - Programm pausiert. Erneut PAUSE drücken zum Fortsetzen.")
@@ -743,45 +753,76 @@ def run_image_processing(master_folder, search_folder, output_csv="zuordnung_erg
     logger.info("\n✔ Bildverarbeitung abgeschlossen")
 
 
-def rotate_scan_folders():
-    """Verschiebt den Inhalt von 'now' in ein neues Timestamp-Verzeichnis und löscht alte"""
-    try:
-        # Prüfe ob 'now' existiert und nicht leer ist
-        if not os.path.exists(SEARCH_FOLDER) or not os.listdir(SEARCH_FOLDER):
-            return
-            
-        # Erstelle das root-Verzeichnis falls nicht existent
-        os.makedirs(SCAN_ROOT, exist_ok=True)
-        
-        # Erstelle Timestamp für neuen Ordner
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        new_folder = os.path.join(SCAN_ROOT, timestamp)
-        
-        # Verschiebe den Inhalt von 'now' in das neue Verzeichnis
-        os.rename(SEARCH_FOLDER, new_folder)
-        logger.info(f"Inhalt von 'now' verschoben nach: {timestamp}")
-        
-        # Erstelle 'now' Verzeichnis neu
-        os.makedirs(SEARCH_FOLDER, exist_ok=True)
-        
-        # Liste aller Timestamp-Ordner, sortiert nach Name (älteste zuerst)
-        all_folders = sorted([
-            f for f in os.listdir(SCAN_ROOT) 
-            if f != "now" and os.path.isdir(os.path.join(SCAN_ROOT, f))
-        ])
-        
-        # Lösche älteste Ordner wenn Maximum überschritten
-        while len(all_folders) >= MAX_SCAN_FOLDERS:
-            check_pause()
-            oldest = all_folders.pop(0)
-            try:
-                shutil.rmtree(os.path.join(SCAN_ROOT, oldest))
-                logger.info(f"Alter Ordner gelöscht: {oldest}")
-            except Exception as e:
-                logger.error(f"Fehler beim Löschen von {oldest}: {str(e)}")
-                
-    except Exception as e:
-        logger.error(f"Fehler beim Rotieren der Scan-Ordner: {str(e)}")
+def get_timestamp_scan_folders():
+    timestamp_folders = []
+    for folder_name in os.listdir(SCAN_ROOT):
+        folder_path = os.path.join(SCAN_ROOT, folder_name)
+        if not os.path.isdir(folder_path):
+            continue
+        suffix = folder_name[15:]
+        if suffix and (not suffix.startswith("_") or not suffix[1:].isdigit()):
+            continue
+        try:
+            datetime.strptime(folder_name[:15], "%Y%m%d_%H%M%S")
+        except ValueError:
+            continue
+        timestamp_folders.append(folder_path)
+    return sorted(timestamp_folders)
+
+def new_timestamp_scan_path():
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    folder_path = os.path.join(SCAN_ROOT, timestamp)
+    suffix = 1
+    while os.path.exists(folder_path):
+        folder_path = os.path.join(SCAN_ROOT, f"{timestamp}_{suffix}")
+        suffix += 1
+    return folder_path
+
+def prune_timestamp_scan_folders(current_folder):
+    timestamp_folders = get_timestamp_scan_folders()
+    while len(timestamp_folders) > MAX_SCAN_FOLDERS:
+        check_pause()
+        oldest = timestamp_folders.pop(0)
+        if os.path.normcase(oldest) == os.path.normcase(current_folder):
+            timestamp_folders.append(oldest)
+            continue
+        shutil.rmtree(oldest)
+        logger.info(f"Alter Ordner gelöscht: {os.path.basename(oldest)}")
+
+def prepare_scan_folder(create_new):
+    """Wählt für diesen Lauf einen Scan-Ordner mit Zeitstempel."""
+    os.makedirs(SCAN_ROOT, exist_ok=True)
+
+    legacy_folder = os.path.join(SCAN_ROOT, "now")
+    archived_folder = None
+    if os.path.exists(legacy_folder):
+        if not os.path.isdir(legacy_folder):
+            raise NotADirectoryError(f"Scan-Pfad ist kein Ordner: {legacy_folder}")
+        if os.listdir(legacy_folder):
+            archived_folder = new_timestamp_scan_path()
+            os.rename(legacy_folder, archived_folder)
+            logger.info(f"Vorhandene Scans archiviert: {os.path.basename(archived_folder)}")
+        else:
+            os.rmdir(legacy_folder)
+
+    if create_new:
+        current_folder = new_timestamp_scan_path()
+        os.makedirs(current_folder)
+        logger.info(f"Neuer Scan-Ordner: {os.path.basename(current_folder)}")
+    elif archived_folder:
+        current_folder = archived_folder
+    else:
+        timestamp_folders = get_timestamp_scan_folders()
+        if timestamp_folders:
+            current_folder = timestamp_folders[-1]
+            logger.info(f"Verwende vorhandenen Scan-Ordner: {os.path.basename(current_folder)}")
+        else:
+            current_folder = new_timestamp_scan_path()
+            os.makedirs(current_folder)
+            logger.info(f"Neuer leerer Scan-Ordner: {os.path.basename(current_folder)}")
+
+    prune_timestamp_scan_folders(current_folder)
+    return current_folder
 
 def main():
     check_pause()
@@ -793,7 +834,7 @@ def main():
     # GB-Farben einmal am Anfang prüfen
     check_gb_colors()
     
-    # Stelle sicher, dass das now-Verzeichnis existiert
+    # Stelle sicher, dass der zeitgestempelte Scan-Ordner existiert
     os.makedirs(SEARCH_FOLDER, exist_ok=True)
     
     run_screenshot_automation(SEARCH_FOLDER)
@@ -829,11 +870,12 @@ if __name__ == "__main__":
         move_screenshots = default_move
         logger.info(f"Timeout - Standard-Option wird verwendet: {'Screenshots werden verschoben' if default_move else 'Screenshots werden nicht verschoben'}")
 
+    SEARCH_FOLDER = prepare_scan_folder(create_new=move_screenshots)
+
     if move_screenshots:
-        rotate_scan_folders()
-        logger.info("Screenshots wurden archiviert.")
+        logger.info("Screenshots werden im neuen zeitgestempelten Ordner gespeichert.")
     else:
-        logger.info("Screenshots werden nicht verschoben, keine neuen Screenshots werden erstellt.")
+        logger.info("Keine neuen Screenshots; verarbeite den zeitgestempelten Ordner.")
         # Bildverarbeitung direkt ausführen ohne neue Screenshots
         if initialize_firebase():
             run_image_processing(MASTER_FOLDER, SEARCH_FOLDER)
