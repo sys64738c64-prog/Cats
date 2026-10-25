@@ -63,6 +63,7 @@ if sys.platform == "win32":
 
 # ===== SCREENSHOT AUTOMATISIERUNG =====
 positions = {
+    "GB1.OL": (-1472, 530), # GB1 Koordinaten, X=Zwischen (21) und Balken, Y=Mitte des Balken
     "GB1": (-1472, 530), # GB1 Koordinaten, X=Zwischen (21) und Balken, Y=Mitte des Balken
     "GB2": (-1558, 750),
     "GB3": (-1197, 886),

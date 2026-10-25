@@ -71,6 +71,7 @@ if sys.platform == "win32":
 # ===== SCREENSHOT AUTOMATISIERUNG =====
 positions = {
     "GB1": (-1472, 530), # GB1 Koordinaten, X=Zwischen (21) und Balken, Y=Mitte des Balken
+    "GB1.OL": (-1472, 530), # GB1.OL Koordinaten, X=Zwischen (21) und Balken, Y=Mitte des Balken
     "GB2": (-1558, 750),
     "GB3": (-1197, 886),
     "GB4": (-794, 897),
@@ -116,12 +117,23 @@ positions = {
     }
 }
 
-monitor = {
-    "left": -1780,
-    "top": 320,
-    "width": 450,
-    "height": 70 #70 or 450
+screenshot_regions = {
+    "Name ohne Fahrzeug": {"left": -1780, "top": 320, "width": 450, "height": 70},
+    "Name mit Fahrzeug": {"left": -1300, "top": 320, "width": 450, "height": 450},
+    "GB1 Plätze": {"left": -1269, "top": 470, "width": 40, "height": 40},
+    "GB2 Plätze": {"left": -1350, "top": 690, "width": 40, "height": 40},
+    "GB3 Plätze": {"left": -991, "top": 822, "width": 40, "height": 40},
+    "GB4 Plätze": {"left": -587, "top": 838, "width": 40, "height": 40},
+    "GB5 Plätze": {"left": -286, "top": 695, "width": 40, "height": 40},
+    "GB6 Plätze": {"left": -308, "top": 445, "width": 40, "height": 40},
+    "GB1 Balken": {"left": -1465, "top": 528, "width": 230, "height": 1},
+    "GB2 Balken": {"left": -1546, "top": 748, "width": 230, "height": 1},
+    "GB3 Balken": {"left": -1188, "top": 880, "width": 230, "height": 1},
+    "GB4 Balken": {"left": -783, "top": 895, "width": 230, "height": 1},
+    "GB5 Balken": {"left": -483, "top": 755, "width": 230, "height": 1},
+    "GB6 Balken": {"left": -507, "top": 504, "width": 230, "height": 1}
 }
+
 
 def check_escape():
     check_pause()
@@ -229,7 +241,7 @@ def capture_slot(slot_name, slot_num, x, y, search_folder):
         logger.warning("Timeout - Aktive Slot-Farbe nicht erkannt!")
     # Screenshot aufnehmen und speichern
     with mss.mss() as sct:
-        screenshot = sct.grab(monitor)
+        screenshot = sct.grab(screenshot_regions["Name ohne Fahrzeug"])
         output_filename = f"{search_folder}/GB{slot_num}-{slot_name}.png"
         mss.tools.to_png(screenshot.rgb, screenshot.size, output=output_filename)
         logger.info(f"Screenshot gespeichert: {output_filename}")
